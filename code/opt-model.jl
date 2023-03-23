@@ -6,8 +6,8 @@ function sigmoid(x)
     return 1 / (1 + exp(-x))
 end
 
-function sigmoid_derivative(x)
-    return sigmoid(x) * (1 - sigmoid(x))
+function linear(x)
+    return x
 end
 
 # Define objective function (mean squared error)
@@ -38,22 +38,28 @@ model = Model(Ipopt.Optimizer)
 
 # FIXME how to implement a neural network with Ipopt?
 # FIXME nonlinear constraints: how to create yhat to compare it to y? shouldn't there be a tolerance?
+@variable(model, out, ...?) # FIXME idea: create out variable for each layer to apply non-linearity
 
-@NLexpression(model, yhat == sigmoid.(sigmoid.(X * W1 .+ b1') * W2 .+ b2'))
+@variable(model, yhat[i in 1:n_data])
 
-@NLconstraint(
-    model, 
-    [i=1:n_data],
-    Y == yhat
-    # Y[i] == sigmoid.(
-    #     sum(
-    #         W2[:,k] .* sigmoid.(sum(W1[:,j].* X[i,:] .+ b1[j]) for j in 1:n_hidden) .+ b2[k]
-    #     ) for k in n_output
-    # )
+@constraint(
+    model,
+    yhat[i] == linear(
+        sum(
+            linear.(
+                sum(
+                    W1[:, j] .* X[i,:] .+ b1[j]
+                    for j in 1:n_hidden
+                )
+            ) * W2[:, k] .+ b2[k]
+            for k in 1:n_output,
+            axis = 2
+        )
+    )
 )
 
 # Minimize objective function
-@NLobjective(model, :Min, mse(y, yhat))
+@NLobjective(model, Min, mse(y, yhat))
 
 # Solve model
 optimize!(model)
