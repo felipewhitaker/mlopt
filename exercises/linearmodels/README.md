@@ -69,4 +69,4 @@ For Metro_Interstate_Traffic_Volume.csv: Predicting `traffic_volume` using ["tem
 
 ## TODO
 
-[ ] Add data description
+- [ ] Add data description
