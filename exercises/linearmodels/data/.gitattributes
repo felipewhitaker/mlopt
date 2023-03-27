@@ -1,0 +1,4 @@
+qsar_fish_toxicity.csv filter=lfs diff=lfs merge=lfs -text
+CASP.csv filter=lfs diff=lfs merge=lfs -text
+mcs_ds_edited_iter_shuffled.csv filter=lfs diff=lfs merge=lfs -text
+Metro_Interstate_Traffic_Volume.csv filter=lfs diff=lfs merge=lfs -text
