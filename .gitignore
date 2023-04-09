@@ -1,6 +1,8 @@
 .markdownlint.json
 .vscode
 **/original
+presentation/exercise/imgs/**/*.png
+presentation/exercise/*.jl
 .DS_Store
 presentation/imgs/linear-regression/*.svg
 !presentation/imgs/linear-regression/1.svg
