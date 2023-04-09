@@ -1,3 +1,5 @@
 .markdownlint.json
 .vscode
 **/original
+presentation/exercise/imgs/**/*.png
+presentation/exercise/*.jl
