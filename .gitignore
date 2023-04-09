@@ -3,3 +3,14 @@
 **/original
 presentation/exercise/imgs/**/*.png
 presentation/exercise/*.jl
+.DS_Store
+presentation/imgs/linear-regression/*.svg
+!presentation/imgs/linear-regression/1.svg
+!presentation/imgs/linear-regression/7.svg
+presentation/imgs/losses/*.svg
+!presentation/imgs/losses/1.svg
+!presentation/imgs/losses/7.svg
+presentation/imgs/feature-engineering/*.svg
+!presentation/imgs/feature-engineering/1.svg
+!presentation/imgs/feature-engineering/5.svg
+presentation/code/*.jl
