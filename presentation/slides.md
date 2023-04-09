@@ -51,6 +51,10 @@ TODO problems to generalization (foreshadow trees)
 
 ---
 
+# Trees
+
+---
+
 # Classification
 
 TODO loss metric
@@ -60,7 +64,7 @@ TODO xor example
 
 # Stochastic Gradient Descent
 
-TODO go in depth
+TODO [go in depth](https://thenumb.at/Autodiff/)
 TODO other ideas: momentum + other optimizers
 
 ---

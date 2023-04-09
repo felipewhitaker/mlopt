@@ -1,5 +1,6 @@
 [deps]
 CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba"
+DecisionTree = "7806a523-6efd-50cb-b5f6-3fa6f1930dbb"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 Flux = "587475ba-b771-5e3f-ad9e-33799f191a9c"
 GLPK = "60bf3e95-4087-53dc-ae20-288a0d20c6a6"
