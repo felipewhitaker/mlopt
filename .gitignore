@@ -14,3 +14,5 @@ presentation/imgs/feature-engineering/*.svg
 !presentation/imgs/feature-engineering/1.svg
 !presentation/imgs/feature-engineering/5.svg
 presentation/code/*.jl
+presentation/exercise/*
+!presentation/exercise/exercise.md
