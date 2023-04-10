@@ -6,7 +6,7 @@ presentation/exercise/*.jl
 .DS_Store
 presentation/imgs/linear-regression/*.svg
 !presentation/imgs/linear-regression/1.svg
-!presentation/imgs/linear-regression/7.svg
+!presentation/imgs/linear-regression/8.svg
 presentation/imgs/losses/*.svg
 !presentation/imgs/losses/1.svg
 !presentation/imgs/losses/7.svg
