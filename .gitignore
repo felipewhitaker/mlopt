@@ -16,3 +16,5 @@ presentation/imgs/feature-engineering/*.svg
 presentation/code/*.jl
 presentation/exercise/*
 !presentation/exercise/exercise.md
+!presentation/exercise/exercise/exercise.pdf
+!presentation/exercise/exercise/cnn-mnist.bson
