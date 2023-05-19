@@ -4,7 +4,7 @@
 
 ### Fully Connected Neural Networks
 
-a. Escolha uma função não linear, gerando dados e dividindo em dois conjuntos: treino e validação. Defina uma rede neural com uma camada escondida. Visualize a perda por época.
+Abaixo está o código de exemplo para criação de uma rede totalmente conectada.
 
 ```julia
 using Flux: Chain, Dense
@@ -17,21 +17,20 @@ model = Chain(
 # ... train model
 ```
 
-b. Variando os valores da camada escondida, visualize a perda por neurônios da camada escondida.
+Lembre que há tutoriais disponibilizados na documentação Flux detalhando o processo de definição de uma rede e seu treinamento ([overview][2] e [quickstart][3]).
 
-c. Utilizando o melhor modelo encontrado acima, modifique a função perda para considerar regularização dos parâmetros [1][1], treinando-o por mais algumas épocas. Julgue a perda final do modelo em um gráfico perda por épocas.
+a. Escolha uma função não linear e simule um conjunto de dados, dividindo-o em dois conjuntos: treino e validação. Defina uma rede neural com uma camada escondida, como definida no exemplo acima. Utilizando os dados simulados, treine a rede neural acompanhando sua perda de treino e validação por época. Analise o gráfico.
+
+b. Mudando o número de neurônios na camada escondida, `hidden_size` no exemplo acima, faça um gráfico da melhor perda de validação encontrada para cada quantidade de neurônios.
+
+c. Utilizando o melhor modelo encontrado acima - aquele com a menor perda de validação entre todos os diferentes modelos treinados -, modifique a função perda para considerar regularização dos parâmetros [e.g. flux regularization][1], treinando-o por mais algumas épocas. Faça novamente um gráfico da sua perda por épocas, julgando o resultado final.
 
 ```julia
-
 using Flux: mse
 
 # to access the networks' parameters, use Flux.params(model)
 loss(model, X, y) = mse(model(X), y) + # regularization
 ```
-
-<!-- d. (extra) Introduza conexões residuais. -->
-
-Os tutoriais disponibilizados na documentação detalhando as funções estão diponíveis em: [Overview ][2] e [Quickstart][3].
 
 [1]: https://github.com/FluxML/Flux.jl/blob/master/docs/src/training/training.md#regularisation
 [2]: https://fluxml.ai/Flux.jl/stable/models/overview/
@@ -39,13 +38,16 @@ Os tutoriais disponibilizados na documentação detalhando as funções estão d
 
 ### Convolutional Neural Networks
 
-Considere a rede treinada disponível em `cnn-mnist.bson` ([Salvando e Recuperando Modelos][4]).
+Considere a rede treinada disponível em `cnn_mnist.bson` ([como salvar e recuperar modelos][4]).
 
 ```julia
 model = Chain(
 
     # `Conv` expects (width, height, channels, batch_size)
-    # x -> Flux.unsqueeze(x, 3),
+    # `channels` might be hidden, as there is only one channel.
+    # to fix this, it is possible to create a dimension with 1 
+    # entry using `unsqueeze`, for example:
+    # x -> Flux.unsqueeze(x, 3), # (28, 28) -> (28, 28, 1)
 
     Conv((3, 3), 1 => 16, stride=(1, 1), pad=(1, 1), relu),
     MaxPool((2, 2)),
@@ -64,7 +66,7 @@ model = Chain(
 )
 ```
 
-a. Julgue algumas de suas predições.
+Considere também os dados de teste que podem ser importados da seguinte forma. Lembre que o modelo foi treinado com imagens no domínio `[-1, 1]`, enquanto os dados originais estão entre `[0, 1]`, tornando necessário normalizá-los.
 
 ```julia
 using MLDatasets: MNIST
@@ -77,14 +79,22 @@ normalized = @. 2.0f0 * X - 1.0f0
 # X = reshape(normalized, size(X, 1), size(X, 2), 1, :)
 ```
 
-b. Considerando uma amostra aleatória do conjunto de teste, calcule a acurácia do modelo. Repare que o modelo faz previsão da probabilidade de pertencimento a uma classe, e não a qual classe a imagem pertence.
+Finalmente, considerando uma amostra aleatória do conjunto de teste, `X_test`.
 
-c. Considere a função abaixo, que recebe: exemplo de entrada `x` (`size(x) = (w, h, c, b)`), um rótulo a ser considerado `label` e um valor para o ruído `epsilon`. Teste a função para diferentes exemplos e valores de epsilon. Julgue a capacidade de generalização da rede.
+a. A partir de `X_test`, julgue algumas das predições do modelo pré-treinado.
+
+b. A partir de `X_test`, calcule a acurácia do modelo nessa amostra. É importante ressaltar que o modelo faz previsão da probabilidade de pertencimento a uma classe, e não a qual classe a imagem pertence, se fazendo necessário tratar as probabilidade para encontrar a classe de pertencimento (e.g. `argmax`).
+
+Considere a função abaixo, uma implementação de é uma implementação de _Fast Gradient Sign Attack [5] from [Tensorflow Example][6] and [PyTorch Example][7]_. Ela recebe: um modelo `cnn`, exemplo de entrada `x` (`size(x) = (w, h, c, b)`, como `X_test`), um rótulo a ser considerado `attack_label` (`attack_label = 1`) e um valor para o ruído `epsilon` (`epsilon = 5e-2`).
 
 ```julia
-function fgsm_attack(x, attack_label::Int = 1, epsilon = 5e-2)
-    # Fast Gradient Sign Attack [5] from [Tensorflow Example][6] 
-    # and [PyTorch Example][7]
+"""
+Given a flux model `cnn` and an example `x`, calculates the gradient for each 
+input pixel. A new image, `perturbed_image` is created with a noise controlled by 
+`epsilon`. Values pass through `clamp` to ensure it stays on the expected domain
+of the trained `cnn`
+"""
+function fgsm_attack(cnn, x, attack_label::Int = 1, epsilon = 5e-2)
     grad = Flux.jacobian(x -> cnn(x), x)[1] # (labels)
     data_grad = reshape(grad, :, 28, 28)
     perturbed_image = clamp.(
@@ -95,7 +105,9 @@ function fgsm_attack(x, attack_label::Int = 1, epsilon = 5e-2)
 end
 ```
 
-d. Considerando o ataque acima, cite formas que poderiam ser incorporadas no treinamento da rede para reduzir o efeito desse ataque.
+c. Utilizando diferentes valores de `epsilon`, julgue a capacidade de generalização da rede.
+
+d. Considerando o ataque acima e alguns exemplos de imagens perturbadas, cite formas que poderiam ser incorporadas no treinamento da rede para reduzir o efeito desse ataque.
 
 <!-- Fine tune the network to be more prepared to handle the adversarial networks . -->
 
@@ -106,17 +118,18 @@ d. Considerando o ataque acima, cite formas que poderiam ser incorporadas no tre
 
 ### Recurrent Neural Networks
 
-a. Escolha uma série temporal. Após dividir os conjuntos para as etapas de treino e teste, processe os dados. Prepare-os para treinar uma rede recorrente da sua escolha.
+a. Escolha ou simule uma série temporal. Divida os conjuntos de dados para as estapas de treino e teste, passando os dados por um pré-processamento, caso necessário. Lembre de criar também um pós-processamento de forma que seja possível transformar a série prevista para o mesmo domínio da original.
 
-b. Treine a rede recorrente. O pacote [Flux][8] disponibiliza uma página sobre modelos recorrentes. Além disso há essa uma conversa no [julia discourse][9] sobre redes recorrentes.
+Considere o código abaixo, que indica o funcionamento de uma rede recorrente: o cálculo feito em cada camada, a função de ativação mais comum e a manutenção do estado escondido. Também vale considerar a página do pacote sobre [modelos recorrentes][8] e essa conversa no [julia discourse][9] sobre redes recorrentes.
 
 ```julia
 using Flux: tanh
 using Flux: RNNCell, Recur
 
 input_size, output_size = 2, 3
-x = rand(Float32, input_size)
-y = rand(Float32, output_size)
+# given 
+# `size(x) = (input_size, batch_size)`
+# `size(y) = (output_size, batch_size)`
 
 model = RNNCell(input_size, output_size)
 Wxh, Whh, b, _ = Flux.params(model)
@@ -131,6 +144,8 @@ isapprox(model(h, x)[1], rmodel(x)) # false
 recurrent = RNN(input_size, output_size)
 Flux.reset!(recurrent) # reset hidden state
 ```
+
+b. Defina e treine uma rede recorrente com os dados escolhidos.
 
 c. Julgue o treinamento com um gráfico perda por épocas.
 
