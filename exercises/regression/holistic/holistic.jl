@@ -30,13 +30,12 @@ function problem(model)
     @variable(model, theta[1:m])
     @variable(model, z[1:p], Bin)
     @variable(model, a[1:p])
-    @variable(model, y)
+    @variable(model, y, Bin)
 
     @constraint(model, a .== V * theta)
     # following given tip
-    @constraint(model, y >= delta)
-    @constraint(model, y >= sum(theta))
-    @constraint(model, y <= -sum(theta))
+    @constraint(model, sum(theta) + y >= delta)
+    @constraint(model, sum(theta) + 1 - y >= delta)
     # big M strategy for absolute value constraints
     @constraint(model, a .>= - M .* z)
     @constraint(model, a .<= M .* z)
@@ -62,6 +61,6 @@ for i in 1:2
     @constraint(model, z' * not_zero <= sum(not_zero) - 1)
 end
 
-# although there are two correlated features in the data, the algorithm 
-# was not able to identify that the last two features should have been
-# zero; reaching infeability on the second iteration. 
+# although there are two correlated features in the data (4 and 5), the algorithm 
+# was not able to identify that the last two features should have been zero; 
+# worse yet, it zeroed the second one and reached infeability on the second iteration.
