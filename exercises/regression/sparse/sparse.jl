@@ -146,42 +146,34 @@ end
 model = Model(optimizer)
 beta = problem(model, (X_train, y_train))
 t = @elapsed optimize!(model) # 0.0811454
-value.(beta)'
-# 0.076668  0.182976  0.101792  0.161939  0.150034  0.108556  0.171414  0.148496  0.0839363  0.146094  0.219129  0.160784  0.173243
+beta_naive = value.(beta)'
 # as expected, no values were selected: every regressor was partially selected
-beta_naive = [0.076668  0.182976  0.101792  0.161939  0.150034  0.108556  0.171414  0.148496  0.0839363  0.146094  0.219129  0.160784  0.173243]
 
 model = Model(optimizer)
 beta = problem(model, (X_train, y_train))
 add_l0(model, beta, m, 1e3)
 t = @elapsed optimize!(model) # 42.00444543
-value.(beta)'
-# 1.7757e-9  9.07339e-9  2.16096e-9  9.12766e-9  4.00345e-5  2.69103e-9  0.334328  0.309015  1.75778e-9  9.01683e-9  0.392479  0.312662  9.06632e-9
+beta_M = value.(beta)'
 # adding a fixed big M made the problem take a lot more time, but some variables were 
 # selected, even if not the correct ones
-beta_M = [1.7757e-9  9.07339e-9  2.16096e-9  9.12766e-9  4.00345e-5  2.69103e-9  0.334328  0.309015  1.75778e-9  9.01683e-9  0.392479  0.312662  9.06632e-9]
 
 model = Model(optimizer)
 beta = problem(model, (X_train, y_train))
 add_l0(model, beta, m, (X, y), 1e3)
 t = @elapsed optimize!(model) # 15.7629185
-value.(beta)'
-# 9.95953e-9  2.93675e-10  1.13249e-9  0.332748  0.315112  5.72182e-10  0.319452  7.97109e-10  1.55655e-9  7.4909e-9  1.84612e-7  0.274085  7.58956e-9
+beta_heuristic = value.(beta)'
 # adding a variable big M for each variable still made it take a lot of time, but much less 
 # than before - even though it had to solve other two optimization problems. Either way, 
 # the selected variables were not correctly chosen, most probably due to the variables being
 # very correlated
-beta_heuristic = [9.95953e-9  2.93675e-10  1.13249e-9  0.332748  0.315112  5.72182e-10  0.319452  7.97109e-10  1.55655e-9  7.4909e-9  1.84612e-7  0.274085  7.58956e-9]
 
 model = Model(optimizer)
 beta = problem(model, (X_train, y_train))
 add_l0(model, beta, m, (X, y)) 
 t = @elapsed optimize!(model) # 12.8920474
-value.(beta)'
-# -8.8585e-9  -1.00732e-8  -9.13341e-9  0.332748  0.315112  -3.74864e-8  0.319452  -1.73186e-8  -9.54877e-9  2.0009e-7  -2.93374e-8  0.274085  -5.96217e-9
+beta_delta = value.(beta)'
 # Δy/Δx as an heuristic seems to have worked fairly well, considering that it chose the same
 # regressors as the heuristic suggested by the class notes, while taking a bit less time.
-beta_delta = [-8.8585e-9  -1.00732e-8  -9.13341e-9  0.332748  0.315112  -3.74864e-8  0.319452  -1.73186e-8  -9.54877e-9  2.0009e-7  -2.93374e-8  0.274085  -5.96217e-9]
 
 model = Model(optimizer)
 beta = problem(model, (X_train, y_train))
