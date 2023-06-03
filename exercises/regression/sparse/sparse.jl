@@ -16,13 +16,12 @@ total_feat = n_feat + n_corr
 m = n_feat + 1 # number of variables to select
 
 lambda = 1e-2
-coef = rand(Uniform(0, 1), n_feat, n_corr)
 
 Xt = rand(Normal(0, 1), n_data, n_feat)
-Xf = Xt * coef .+ rand(Normal(0, 0.04), n_data, n_corr)
+Xf = rand(Uniform(0, 1), n_data, n_corr)
 X = hcat(Xt, Xf)
 
-true_coef = [1 1 1]'
+true_coef = [1 2 3]'
 y = Xt * true_coef
 
 train_cut = trunc(Int, .7 * n_data)
