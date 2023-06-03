@@ -94,6 +94,7 @@ end
 """Adds l0 constraint using Δy/Δx as values for big M[i]"""
 function add_l0(model, beta, K, (X, y)::Tuple)
     # a big M for each variable is added
+    p = size(beta, 1)
     ydelta = maximum(y) - minimum(y)
     M = [ydelta / (maximum(X[:, i]) - minimum(X[:, i])) for i in 1:p]
     @variable(model, b[1:p], Bin)
