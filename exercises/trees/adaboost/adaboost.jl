@@ -12,7 +12,7 @@ function adaboost(
     n_estimators::Integer
 )
     # adapted from https://github.com/JuliaAI/DecisionTree.jl/blob/dev/src/classification/main.jl
-    # FIXME assumes weak learner is `stump` frmo `build_stump`
+    # FIXME assumes weak learner is `stump`
 
     metric_stops = (1, 10, 20, 50)
     train_errs, val_errs, wdist = [], [], []
@@ -57,7 +57,7 @@ end
 features, labels = load_data("adult")
 
 subset = 1:10_000 # FIXME low computing resources
-features = features[subset, [1, 3, 5, 11, 12, 13]] # keeping numeric features
+features = features[subset, [1, 3, 5, 11, 12, 13]] # keeping only numeric features
 labels = (labels[subset] .== " >50K") .* 2 .- 1 # converting to -1, 1
 
 # spliting train, val
