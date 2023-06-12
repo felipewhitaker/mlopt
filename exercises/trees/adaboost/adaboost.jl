@@ -84,6 +84,25 @@ naive_acc = sum(naive_preds .== y_test) / size(X_test, 1)
 println("(Naive, Adaboost) accuracy: ($naive_acc, $adaboost_acc)")
 # (Naive, Adaboost) accuracy: (0.8225, 0.8365)
 
+using Plots
+
+n_estimators = [1, 10, 20, 50]
+
+plot(xlabel="n_estimators", ylabel="error", title="Train and Validation errors")
+for (name, idx) in (("train", 1), ("val", 2))
+    plot!(
+        n_estimators,
+        [m[idx] for m in metrics],
+        label="$name error",
+    )
+end
+plot!()
+
+for (i, m) in zip(n_estimators, metrics)
+    histogram(m[3], label="weights", title="Weights distribution for $i estimators")
+    savefig("$(i)_distribution.png")
+end
+
 # # FIXME I adapted a SVM implementation with JuMP to take in weights,
 # # but it is very slow and lacks regularization
 # function svm((X, y); weights=nothing)
