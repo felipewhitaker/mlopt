@@ -84,10 +84,26 @@ naive_acc = sum(naive_preds .== y_test) / size(X_test, 1)
 println("(Naive, Adaboost) accuracy: ($naive_acc, $adaboost_acc)")
 # (Naive, Adaboost) accuracy: (0.8225, 0.8365)
 
-estimators, estimators_weights, metrics = adaboost(svm, (X_train, y_train), (X_val, y_val), 50)
+# # FIXME I adapted a SVM implementation with JuMP to take in weights,
+# # but it is very slow and lacks regularization
+# function svm((X, y); weights=nothing)
+#     # from https://github.com/matbesancon/SimpleSVMs.jl/blob/master/src/SimpleSVMs.jl
 
-y_pred = adaboost_predict(estimators, estimators_weights, X_test)
-adaboost_acc = sum(y_pred .== y_test) / size(X_test, 1)
+#     n, p = size(X)
 
-println("(Naive, Adaboost) accuracy: $naive_acc, $adaboost_acc")
-# Out: (Naive, Adaboost) accuracy: 0.7585, 0.8095
+#     m = JuMP.Model(Ipopt.Optimizer)
+#     set_silent(m)
+#     @variable(m, W[1:p])
+#     @variable(m, b)
+#     @variable(m, l[1:n] >= 0)
+#     @constraint(m, l .>= 1 .- y .* (X * W .+ b))
+#     weights = weights === nothing ? ones(n) : weights
+#     @objective(m, Min, weights' * l)
+#     optimize!(m)
+
+#     svm_predict(X) = sign.(X * value.(W) .+ value.(b))
+#     return svm_predict
+# end
+# svm_model = svm((X_train, y_train))
+# y_pred = svm_model(X_test)
+# naive_acc = sum(y_pred .== y_test) / size(X_test, 1)
