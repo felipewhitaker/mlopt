@@ -141,8 +141,6 @@ function newsvendor(d::AbstractArray; x::Union{Number, Nothing} = nothing)
       return m
 end
 
-solve(newsvendor(demand, x = 200))
-
 function newsvendor(d::AbstractArray, X::AbstractMatrix, kdtree::KDTree; x::Union{Number, Nothing} = nothing, k::Integer = 5)
 
       # update `d` to consider kNN
