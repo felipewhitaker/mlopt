@@ -18,6 +18,6 @@ presentation/code/*.jl
 !presentation/code/nn-*.jl
 !presentation/code/opt-*.jl
 presentation/exercise/*
-!presentation/exercise/exercise.md
-!presentation/exercise/exercise/exercise.pdf
-!presentation/exercise/exercise/cnn-mnist.bson
+!presentation/exercise/README.md
+!presentation/exercise/exercise.pdf
+!presentation/exercise/cnn-mnist.bson
