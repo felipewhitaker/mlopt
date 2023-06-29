@@ -107,7 +107,8 @@ module Exercise
                   ϵ = rand(1)
                   Y = A * (X + δ/4) + (B*X) .* ϵ
                   for i in 1:dy
-                        Y_scenarios[ω, i] = 50 + 100 * maximum([0; Y[i]])
+                        # FIXME `50 + 100 * maximum([0; Y[i]]) >> u`
+                        Y_scenarios[ω, i] = 50 + 4 * maximum([0; Y[i]]) 
                   end
             end
             return X_scenarios, Y_scenarios
@@ -157,14 +158,8 @@ function solve(m)
       return objective_value(m), value.(m[:x])
 end
 
-function prescr_efficacy(d::AbstractArray, (x_star, x_hat, x_SAA))
-      cost(z, y) = c * z - (1/S) * sum(r .* y .+ q .* z)
-
-      rv_star = cost(x_star, d)
-      rv_hat  = cost(x_hat, d)
-      rv_SAA  = cost(x_SAA, d)
-
-      return (rv_SAA - rv_hat) / (rv_SAA - rv_star)
+function prescr_efficacy(obj_star, obj_hat, obj_SAA)
+      return (obj_SAA - obj_hat) / (obj_SAA - obj_star)
 end
 
 c = 10
@@ -176,20 +171,27 @@ S = 1000 # Total number of scenarios
 X, demand = Exercise.Exercise.sim_scenarios_Bert(S)
 
 # a)
-obj_true, x_true = solve(newsvendor(demand)) # (-2250.0, 150.0)
+obj_true, x_true = solve(newsvendor(demand))
+# Out: (-758.792755043592, 58.46957783444397)
 
 # b)
 new_X, new_demand = Exercise.Exercise.sim_scenarios_Bert(100)
 
 # c)
-obj_SAA, x_SAA = solve(newsvendor(new_demand, x = x_true)) # (-2250.0, 150.0)
+obj_SAA, x_SAA = solve(newsvendor(new_demand, x = x_true))
+# Out: (-752.351390440655, 58.46957783444397)
+
+# it worsened a bit (-758.80 to -752.35), but it's still a good solution
 
 # d)
 # # FIXME copilot got creative
 # # KNN(x, y, k) = mean(y[sortperm(vec(sum(abs.(x .- x'), dims=2)), dims=2)[1:k]])
 
 m = newsvendor(demand, new_X, KDTree(X'); k = 5)
-obj_knn, x_knn = solve(m) # (-2250.0, 150.0)
+obj_knn, x_knn = solve(m)
+# Out: (-754.9422442976366, 56.148190447618475)
+
+# using kNN improved the result a bit (-752.35 to -754.94)
 
 # e)
 objs_knn, ys_knn = [], []
@@ -201,13 +203,18 @@ for k_ in 3:15
 end
 
 plot(3:15, objs_knn, label = "kNN", xlabel = "k", ylabel = "Objective value", title = "Objective value vs k")
+# `argmin(objs_knn) = best_k = 8`, but not by much (< 1%)
 
 # f)
 last_X, last_demand = Exercise.Exercise.sim_scenarios_Bert(200)
 
-_, x_SAA = solve(newsvendor(new_demand, x = x_true))
-_, x_hat = solve(newsvendor(demand, new_X, KDTree(X'); k = 13))
+obj_SAA, _ = solve(newsvendor(new_demand, x = x_true))
+# Out: (-752.351390440655, 58.46957783444397)
+obj_hat, _ = solve(newsvendor(demand, new_X, KDTree(X'); k = 13))
+# Out: (-754.8526194295482, 55.93017391059969)
 
-prescr_efficacy(last_demand, (x_true, x_hat, x_SAA)) # NaN
+prescr_efficacy(obj_true, obj_hat, obj_SAA)
+# Out: 0.38830731422232295
 
-# no difference between methods were found
+# using a kNN improved the result, but just a bit, resulting in a
+# a prescriptive efficacy of 38.83%
