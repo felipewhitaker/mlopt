@@ -108,7 +108,7 @@ module Exercise
                   Y = A * (X + δ/4) + (B*X) .* ϵ
                   for i in 1:dy
                         # FIXME `50 + 100 * maximum([0; Y[i]]) >> u`
-                        Y_scenarios[ω, i] = 50 + 4 * maximum([0; Y[i]]) 
+                        Y_scenarios[ω, i] = 50 + 4 * maximum([0; Y[i]])
                   end
             end
             return X_scenarios, Y_scenarios
@@ -171,25 +171,22 @@ S = 1000 # Total number of scenarios
 X, demand = Exercise.Exercise.sim_scenarios_Bert(S)
 
 # a)
-obj_true, x_true = solve(newsvendor(demand))
+obj_gSAA, x_gSAA = solve(newsvendor(demand))
 # Out: (-758.792755043592, 58.46957783444397)
 
 # b)
 new_X, new_demand = Exercise.Exercise.sim_scenarios_Bert(100)
 
 # c)
-obj_SAA, x_SAA = solve(newsvendor(new_demand, x = x_true))
+obj_SAA, x_SAA = solve(newsvendor(new_demand, x = x_gSAA))
 # Out: (-752.351390440655, 58.46957783444397)
 
-# it worsened a bit (-758.80 to -752.35), but it's still a good solution
+# it worsened a bit, but it's still a good solution
 
 # d)
-# # FIXME copilot got creative
-# # KNN(x, y, k) = mean(y[sortperm(vec(sum(abs.(x .- x'), dims=2)), dims=2)[1:k]])
-
-m = newsvendor(demand, new_X, KDTree(X'); k = 5)
-obj_knn, x_knn = solve(m)
-# Out: (-754.9422442976366, 56.148190447618475)
+_, x_knn = solve(newsvendor(demand, new_X, KDTree(X'); k = 5))
+obj_knn, _ = solve(newsvendor(new_demand; x = x_knn))
+# Out: (-753.8120040586934, 56.148190447618475)
 
 # using kNN improved the result a bit (-752.35 to -754.94)
 
@@ -208,13 +205,22 @@ plot(3:15, objs_knn, label = "kNN", xlabel = "k", ylabel = "Objective value", ti
 # f)
 last_X, last_demand = Exercise.Exercise.sim_scenarios_Bert(200)
 
-obj_SAA, _ = solve(newsvendor(new_demand, x = x_true))
-# Out: (-752.351390440655, 58.46957783444397)
-obj_hat, _ = solve(newsvendor(demand, new_X, KDTree(X'); k = 13))
-# Out: (-754.8526194295482, 55.93017391059969)
+# for this problem, the perfect information solution is known, but
+# could've been done like below
+# obj_true, x_true = mean(
+#       hcat(
+#             collect.([solve(newsvendor([d])) for d in last_demand])...
+#       ),
+#       dims = 2
+# )
+x_true = mean([minimum([d, u]) for d in last_demand])
+obj_true, _ = solve(newsvendor(last_demand, x = x_true))
+# Out: (-752.9611153427848, 57.25588396709152)
+obj_SAA, x_SAA = solve(newsvendor(last_demand))
+# Out: (-753.8212547142131, 54.78342048843004)
+_, x_knn = solve(newsvendor(demand, last_X, KDTree(X'); k = 13))
+obj_knn, _ = solve(newsvendor(last_demand, x = x_knn))
+# Out: (-753.7841942128597, 55.19848234431208)
 
-prescr_efficacy(obj_true, obj_hat, obj_SAA)
-# Out: 0.38830731422232295
-
-# using a kNN improved the result, but just a bit, resulting in a
-# a prescriptive efficacy of 38.83%
+prescr_efficacy(obj_true, obj_knn, obj_SAA)
+# Out: .04% (no improvement)
