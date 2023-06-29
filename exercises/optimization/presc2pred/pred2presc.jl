@@ -136,7 +136,7 @@ function newsvendor(d::AbstractArray; x::Union{Number, Nothing} = nothing)
       @constraint(m, y .<= d)
       @constraint(m, y .+ z .<= x)
 
-      @objective(m, Min, c * x - (1/S) * sum(r .* y .+ q .* z))
+      @objective(m, Min, c * x - (1/S) * sum(q .* y .+ r .* z))
 
       return m
 end
