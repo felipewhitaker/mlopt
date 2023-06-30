@@ -1,50 +1,36 @@
 using JuMP
-using Ipopt
+using Ipopt, GLPK, HiGHS
+using MLDataUtils: shuffleobs, splitobs
 using Distributions
 using DecisionTree: load_data
 using DecisionTree: RandomForestClassifier, fit!, predict
 
-optimizer = Ipopt.Optimizer
+using Ipopt, Juniper
+optimizer = optimizer_with_attributes(
+    Juniper.Optimizer, 
+    "nl_solver" => Ipopt.Optimizer,
+    "mip_solver" => HiGHS.Optimizer
+)
 
-function problem((X, y), c::Float64, s_prev::Vector{Float64}; gamma::Float64=.0)
-    
-    N, p = size(X)
+function problem((X, y); K::Integer = 3, lambda::Float64 = 1e-2)
 
     global optimizer
     m = Model(optimizer)
 
-    @variable(m, eta)
-    @variable(m, epsilon[1:N] >= .0)
-    @variable(m, beta[1:p])
-    @variable(m, alpha[1:N])
+    n, p = size(X)
+    @variable(m, w[1:p])
+    @variable(m, b)
+    @variable(m, ϵ[1:n] >= 0)
+    @variable(m, z[1:p], Bin)
 
-    # FIXME very similar to subproblem objetive
-    # FIXME refactor to a function to be the cut
-    @constraint(m, eta >= c - (gamma / 2 * alpha' * (X * X') * alpha)' * (s .- sprev))
+    @constraint(m, y .* (X * w .+ b) .>= 1 .- ϵ)
+    @constraint(m, (1 .- z) .* w .== 0)
+    @constraint(m, sum(z) <= K)
 
-    @constraint(m, epsilon .>= 1 .- y .* (X * beta))
-    @constraint(m, y .* alpha .>= -1.0)
-    @constraint(m, y .* alpha .<= -1.0)
+    @objective(m, Min, sum(ϵ) + lambda * sum(w .^ 2))
 
-    @objective(m, Min, eta)
-    return (model = m)
-
-end
-
-function subproblem(s, (X, y); gamma::Float64=.0)
-    global optimizer
-    N = size(X, 1)
-
-    m = Model(optimize)
-
-    @variable(m, alpha[1:N])
-    @variable(m, e[1:N], Bin)
-
-    @constraint(m, e' * a == 0)
-    
-    @objective(m, Max, -gamma / 2 .* s * alpha' * (X * X') * alpha - y' * alpha)
     optimize!(m)
-    return (obj_value = objective_value(m), alpha = value.(alpha))
+    return value.(w), value(b), objective_value(m)
 end
 
 features, labels = load_data("adult")
@@ -62,19 +48,14 @@ X_val, y_val = features[validx, :], labels[validx]
 X_test, y_test = features[testidx, :], labels[testidx]
 
 # optimization model
-eta, c = -1., .0            # FIXME check if there are any heuristics
-s = zeros(size(X_train, 1)) # FIXME check if there are any heuristics
-model = problem((X_train, y_train), 0.0, s)
-optimize!(model)
-while eta <= c
-    c, _ = subproblem(s, (X_train, y_train))
-    @constraint(model, 1) # FIXME add cut
-    eta = value.(model[:eta])
-end
-
-# TODO how to make out of sample predictions?
+w, b, _ = problem((X_train, y_train))
+acc_svm = mean(y_test .* (w' .* X_test .+ b) .> 0)
+# Out: 0.751
 
 # RandomForest comparison
-baseline = RandomForestClassifier()
+# to try to be fair, we use the same number of features per tree
+baseline = RandomForestClassifier(n_subfeatures = 3)
 fit!(baseline, X_train, y_train)
 y_pred = predict(baseline, X_test)
+acc_rf = mean(y_pred .== y_test)
+# Out: 0.812
